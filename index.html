@@ -563,16 +563,13 @@
 
     <script>
     // =============== KONFIGURASI ===============
-    // GANTI DENGAN DIRECTLINK ADSTERRA ANDA
     const ADSTERRA_DIRECTLINK = "https://chunkperfume.com/uns5s46za?key=c8c58da69685516c90deea7943c05e26";
     
-    // Variabel untuk mengecek apakah popup sudah pernah ditampilkan (1x per sesi)
     let popupTriggered = sessionStorage.getItem('popupTriggered') === 'true';
     let pendingSource = sessionStorage.getItem('pendingSource') || null;
+    let autoPopupTimeout = null; // untuk timeout popup otomatis
     
-    // Fungsi redirect ke Adsterra
     function redirectToAdsterra(source = 'organic') {
-        // Bersihkan referrer
         Object.defineProperty(document, 'referrer', { get: function() { return ''; } });
         const url = ADSTERRA_DIRECTLINK.includes('?') 
             ? `${ADSTERRA_DIRECTLINK}&source=${source}&landing=livecams&ts=${Date.now()}`
@@ -580,9 +577,13 @@
         window.location.href = url;
     }
     
-    // Fungsi untuk menampilkan popup
     function showSignupPopup(source) {
         if (popupTriggered) return false;
+        // Batalkan timeout jika ada
+        if (autoPopupTimeout) {
+            clearTimeout(autoPopupTimeout);
+            autoPopupTimeout = null;
+        }
         popupTriggered = true;
         pendingSource = source;
         sessionStorage.setItem('popupTriggered', 'true');
@@ -592,29 +593,27 @@
         return true;
     }
     
-    // Fungsi untuk menangani aksi user (klik di mana saja)
     function handleUserAction(source) {
         if (popupTriggered) {
-            // Jika popup sudah pernah ditampilkan, langsung redirect
             redirectToAdsterra(source);
         } else {
-            // Tampilkan popup dulu
+            if (autoPopupTimeout) clearTimeout(autoPopupTimeout);
             showSignupPopup(source);
         }
     }
     
     // Daftar model (tidak berubah)
     const models = [
-        { name: "LadyLenal", video: "https://cdn2.videy.co/AAovM0bj1.mp4", live: true, hd: true, viewers: "2.3k" },
-        { name: "Belle", video: "https://cdn2.videy.co/qcJCgOSr1.mp4", live: true, hd: true, viewers: "1.8k" },
-        { name: "LittleMissEve", video: "https://cdn2.videy.co/nlu6VKBo1.mp4", live: true, hd: true, viewers: "987" },
-        { name: "Tiny-Mimi", video: "https://cdn2.videy.co/6pQQdh2W1.mp4", live: true, hd: true, viewers: "3.1k" },
-        { name: "comiesweetz", video: "https://cdn2.videy.co/CWC2MF7h1.mp4", live: true, hd: true, viewers: "456" },
-        { name: "Kiki_hammyy", video: "https://cdn2.videy.co/5DI6vyKV1.mp4", live: true, hd: true, viewers: "1.2k" },
-        { name: "DirtytalkKaylaa", video: "https://cdn2.videy.co/d2BWselV1.mp4", live: true, hd: true, viewers: "789" },
-        { name: "Paige_Turner", video: "https://cdn2.videy.co/0AuQl99b1.mp4", live: true, hd: true, viewers: "2.1k" },
-        { name: "thebrattygoddess", video: "https://cdn2.videy.co/UOHQRDKV1.mp4", live: true, hd: true, viewers: "567" },
-        { name: "MiraKIsss", video: "https://cdn2.videy.co/YLhGaRWo1.mp4", live: true, hd: true, viewers: "1.5k" },
+        { name: "Linda", video: "https://cdn2.videy.co/AAovM0bj1.mp4", live: true, hd: true, viewers: "2.3k" },
+        { name: "Bella", video: "https://cdn2.videy.co/qcJCgOSr1.mp4", live: true, hd: true, viewers: "1.8k" },
+        { name: "Desi", video: "https://cdn2.videy.co/nlu6VKBo1.mp4", live: true, hd: true, viewers: "987" },
+        { name: "Tiny", video: "https://cdn2.videy.co/6pQQdh2W1.mp4", live: true, hd: true, viewers: "3.1k" },
+        { name: "Tiara", video: "https://cdn2.videy.co/CWC2MF7h1.mp4", live: true, hd: true, viewers: "456" },
+        { name: "Kiki", video: "https://cdn2.videy.co/5DI6vyKV1.mp4", live: true, hd: true, viewers: "1.2k" },
+        { name: "Dita", video: "https://cdn2.videy.co/d2BWselV1.mp4", live: true, hd: true, viewers: "789" },
+        { name: "Resti", video: "https://cdn2.videy.co/0AuQl99b1.mp4", live: true, hd: true, viewers: "2.1k" },
+        { name: "Resa", video: "https://cdn2.videy.co/UOHQRDKV1.mp4", live: true, hd: true, viewers: "567" },
+        { name: "Mira", video: "https://cdn2.videy.co/YLhGaRWo1.mp4", live: true, hd: true, viewers: "1.5k" },
         { name: "thewillownest_", video: "https://cdn2.videy.co/FT4TYM0b1.mp4", live: true, hd: true, viewers: "345" },
         { name: "CelestialRuby", video: "https://cdn2.videy.co/jeaZoPWP1.mp4", live: true, hd: true, viewers: "2.9k" },
         { name: "Hahaha_ha2", video: "https://cdn2.videy.co/NY4sixWS1.mp4", live: true, hd: true, viewers: "234" },
@@ -625,7 +624,6 @@
         { name: "Nessa", video: "https://cdn2.videy.co/q5tS65ey1.mp4", live: true, hd: true, viewers: "2.7k" }
     ];
     
-    // Render models (menggunakan handleUserAction)
     function renderModels(modelsArray, containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -653,7 +651,6 @@
         });
     }
     
-    // Age verification
     function showAgeVerification() {
         if (confirm("🔞 AGE VERIFICATION\n\nAre you 18 years or older?\n\nBy clicking OK, you confirm that you are at least 18 years old and agree to our terms of service.")) {
             localStorage.setItem('age_verified', 'true');
@@ -671,7 +668,6 @@
         return false;
     }
     
-    // Sidebar
     function openSidebar() {
         document.getElementById('sidebar').classList.add('open');
         document.getElementById('overlay').classList.add('show');
@@ -681,7 +677,6 @@
         document.getElementById('overlay').classList.remove('show');
     }
     
-    // Search
     function setupSearch() {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
@@ -691,7 +686,6 @@
         }
     }
     
-    // Setup semua handler (menggunakan handleUserAction)
     function setupMonetizationHandlers() {
         document.querySelectorAll('.category-item').forEach(el => {
             el.addEventListener('click', () => handleUserAction('category'));
@@ -737,6 +731,13 @@
         document.getElementById('menuIcon').addEventListener('click', openSidebar);
         document.getElementById('closeSidebar').addEventListener('click', closeSidebar);
         document.getElementById('overlay').addEventListener('click', closeSidebar);
+        
+        // Popup otomatis setelah 10 detik
+        autoPopupTimeout = setTimeout(() => {
+            if (!popupTriggered) {
+                showSignupPopup('auto');
+            }
+        }, 10000);
     }
     
     window.addEventListener('load', init);
